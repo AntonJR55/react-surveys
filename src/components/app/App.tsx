@@ -3,73 +3,104 @@ import {
     Route,
     Routes,
     Navigate,
+    useNavigate,
+    useLocation,
 } from "react-router-dom";
+import { Header } from "../header/Header";
 import { MainPage } from "../pages/MainPage";
-import { LoginPage } from "../pages/LoginPage";
-import { CreatingPasswordPage } from "../pages/CreatingPasswordPage";
+import { AuthPage } from "../pages/AuthPage";
 import { StudentPage } from "../pages/StudentPage";
+import { SurveyCompletionPage } from "../pages/SurveyCompletionPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 
-function App() {
-    // const isAuth = true;
-    // const userRole = "student";
-
-    // const ProtectedRoute = ({
-    //     children,
-    //     requiredRole,
-    // }: {
-    //     children: React.ReactNode;
-    //     requiredRole?: string;
-    // }) => {
-    //     if (!isAuth) {
-    //         return <Navigate to="/login" />;
-    //     }
-
-    //     if (requiredRole && userRole !== requiredRole) {
-    //         return <Navigate to="/" />;
-    //     }
-
-    //     return children;
-    // };
-
-    // const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-    //     return !isAuth ? children : <Navigate to="/" />;
-    // };
-
-    return <StudentPage />;
-
-    // return (
-    //     <Router>
-    //         <Routes>
-    //             <Route path="/" element={<MainPage />} />
-    //             <Route
-    //                 path="/login"
-    //                 element={
-    //                     <PublicRoute>
-    //                         <LoginPage />
-    //                     </PublicRoute>
-    //                 }
-    //             />
-    //             <Route
-    //                 path="/creating_password"
-    //                 element={
-    //                     <PublicRoute>
-    //                         <CreatingPasswordPage />
-    //                     </PublicRoute>
-    //                 }
-    //             />
-    //             <Route
-    //                 path="/student_page"
-    //                 element={
-    //                     <ProtectedRoute requiredRole="student">
-    //                         <StudentPage />
-    //                     </ProtectedRoute>
-    //                 }
-    //             />
-    //             <Route path="*" element={<NotFoundPage />} />
-    //         </Routes>
-    //     </Router>
-    // );
+export function App() {
+    return (
+        <Router>
+            <AppContent />
+        </Router>
+    );
 }
 
-export default App;
+function AppContent() {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const storedUserData = sessionStorage.getItem("userData");
+    const userData = storedUserData ? JSON.parse(storedUserData) : null;
+    const isAuthUser = !!userData;
+    const userName = userData?.userName;
+    const userRole = userData?.roleNameEn;
+    const isAuthPage = location.pathname === "/login";
+
+    const ProtectedRoute = ({
+        children,
+        requiredRole,
+    }: {
+        children: React.ReactNode;
+        requiredRole: string;
+    }) => {
+        if (!isAuthUser) {
+            return <Navigate to="/login" replace />;
+        }
+
+        if (userRole !== requiredRole) {
+            return <Navigate to="/" replace />;
+        }
+
+        return children;
+    };
+
+    const handleLoginNavigate = () => {
+        navigate("/login");
+    };
+
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header
+                isSimplified={isAuthPage}
+                isAuthUser={isAuthUser}
+                userRole={userRole}
+                userName={userName}
+                onHandleLoginNavigate={handleLoginNavigate}
+            />
+            <main className="flex-1">
+                <Routes>
+                    <Route
+                        path="/"
+                        element={
+                            <MainPage
+                                onHandleLoginNavigate={handleLoginNavigate}
+                            />
+                        }
+                    />
+                    <Route path="/login" element={<AuthPage />} />
+                    <Route
+                        path="/dashboard/student"
+                        element={
+                            <ProtectedRoute requiredRole="student">
+                                <StudentPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard/student/survey-completion/:surveyId"
+                        element={
+                            <ProtectedRoute requiredRole="student">
+                                <SurveyCompletionPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/dashboard/teacher"
+                        element={
+                            <ProtectedRoute requiredRole="teacher">
+                                <StudentPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+            </main>
+        </div>
+    );
+}
