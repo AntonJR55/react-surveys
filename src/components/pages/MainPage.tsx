@@ -71,10 +71,10 @@ export function MainPage({ onHandleLoginNavigate }: MainPageProps) {
                                     Для преподавателей
                                 </h3>
                                 <ul className="text-gray-600 space-y-2">
-                                    <li>• Создание опросов для групп</li>
+                                    <li>• Создание опросов по дисциплинам</li>
                                     <li>• Управление опросами</li>
+                                    <li>• История завершенных опросов</li>
                                     <li>• Просмотр результатов</li>
-                                    <li>• Экспорт данных в Excel</li>
                                 </ul>
                             </CardContent>
                         </Card>
