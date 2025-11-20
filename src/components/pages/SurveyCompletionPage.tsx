@@ -47,7 +47,7 @@ export function SurveyCompletionPage({
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<number, any>>({});
     const [isCompleted, setIsCompleted] = useState(false);
-    const [finalGrade, sertFinalGrade] = useState(0);
+    const [finalGrade, setFinalGrade] = useState(0);
 
     const navigate = useNavigate();
 
@@ -136,7 +136,7 @@ export function SurveyCompletionPage({
         try {
             await saveStudentGrade(studentId, numericSurveyId, finalGrade);
             updateUserSurveysInStorage(surveyData.surveyId, finalGrade);
-            sertFinalGrade(finalGrade);
+            setFinalGrade(finalGrade);
             setIsCompleted(true);
         } catch (error) {
             console.error("Ошибка сохранения оценки:", error);

@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../UI/Select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../UI/Tabs";
+import { Tabs, TabsContent } from "../UI/Tabs";
 import {
     Table,
     TableBody,
@@ -125,9 +125,11 @@ export function SurveyResultsPage({
     const filteredResults = studentResults.filter((student) => {
         const matchesGroup =
             selectedGroup === "all" || student.groupCode === selectedGroup;
+
         const matchesSearch = student.student.userName
             .toLowerCase()
             .includes(searchStudent.toLowerCase());
+
         return matchesGroup && matchesSearch;
     });
 

@@ -20,8 +20,17 @@ export const useHttp = () => {
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json();
+
+                    const errorStatus =
+                        errorData.status ||
+                        errorData.statusCode ||
+                        response.status;
+                    const errorMessage =
+                        errorData.message || response.statusText;
+
                     throw new Error(
-                        `Could not fetch ${apiUrl}${path}, status: ${response.status}`
+                        `Could not fetch ${apiUrl}${path}, status: ${errorStatus}, message: ${errorMessage}`
                     );
                 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogIn, UserPlus } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuthService } from "../../hooks/useAuthService";
 import {
     Card,
@@ -32,7 +33,7 @@ export function AuthPage() {
 
     const { login, createPassword } = useAuthService();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
@@ -46,18 +47,104 @@ export function AuthPage() {
                 navigate("/dashboard/student");
             } else if (res.userData.roleNameEn === "teacher") {
                 navigate("/dashboard/teacher");
+            } else if (res.userData.roleNameEn === "admin") {
+                navigate("/dashboard/admin");
             }
         } catch (error) {
-            console.error("AuthPage - Ошибка авторизации:", error);
+            if (error instanceof Error) {
+                const parts = error.message.split(", ");
+                let status = null;
+                let message = null;
+
+                for (const part of parts) {
+                    if (part.startsWith("status: ")) {
+                        status = parseInt(part.replace("status: ", ""));
+                    } else if (part.startsWith("message: ")) {
+                        message = part.replace("message: ", "");
+                    }
+                }
+
+                if (status === 401) {
+                    toast.error(
+                        message || "Неверное имя пользователя или пароль",
+                        {
+                            duration: 3000,
+                        }
+                    );
+                } else if (status === 412) {
+                    toast.error(
+                        message || "Пароль для пользователя не создан",
+                        {
+                            duration: 3000,
+                        }
+                    );
+                } else {
+                    toast.error("Ошибка при авторизации", {
+                        duration: 3000,
+                    });
+                }
+            } else {
+                toast.error("Ошибка при авторизации", {
+                    duration: 3000,
+                });
+            }
+
+            setUsername("");
+            setPassword("");
         }
     };
 
-    const handleCreatePassword = (e: React.FormEvent) => {
+    const handleCreatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        createPassword(newUsername, newPassword);
-        setIsCreateDialogOpen(false);
-        setNewUsername("");
-        setNewPassword("");
+        try {
+            await createPassword(newUsername, newPassword);
+
+            setIsCreateDialogOpen(false);
+            setNewUsername("");
+            setNewPassword("");
+
+            toast.success("Пароль успешно создан", {
+                duration: 3000,
+            });
+        } catch (error) {
+            if (error instanceof Error) {
+                const parts = error.message.split(", ");
+                let status = null;
+                let message = null;
+
+                for (const part of parts) {
+                    if (part.startsWith("status: ")) {
+                        status = parseInt(part.replace("status: ", ""));
+                    } else if (part.startsWith("message: ")) {
+                        message = part.replace("message: ", "");
+                    }
+                }
+
+                if (status === 404) {
+                    toast.error(message || "Пользователь не найден", {
+                        duration: 3000,
+                    });
+                } else if (status === 409) {
+                    toast.error(
+                        message || "Пароль для пользователя уже создан",
+                        {
+                            duration: 3000,
+                        }
+                    );
+                } else {
+                    toast.error("Ошибка при создании пароля", {
+                        duration: 3000,
+                    });
+                }
+            } else {
+                toast.error("Ошибка при создании пароля", {
+                    duration: 3000,
+                });
+            }
+
+            setNewUsername("");
+            setNewPassword("");
+        }
     };
 
     return (
@@ -76,7 +163,7 @@ export function AuthPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="userName">Имя пользователя</Label>
                             <Input
@@ -105,79 +192,75 @@ export function AuthPage() {
                         >
                             Войти
                         </Button>
-                        <div className="text-center text-sm text-gray-600">
-                            <Dialog
-                                open={isCreateDialogOpen}
-                                onOpenChange={setIsCreateDialogOpen}
-                            >
-                                <DialogTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="text-sky-600 hover:underline"
+                    </form>
+                    <div className="text-center text-sm text-gray-600 mt-4">
+                        <Dialog
+                            open={isCreateDialogOpen}
+                            onOpenChange={setIsCreateDialogOpen}
+                        >
+                            <DialogTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="text-sky-600 hover:underline"
+                                >
+                                    Создать пароль
+                                </button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                        <UserPlus className="h-5 w-5 text-sky-600" />
+                                        Создание пароля
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        Введите логин и новый пароль для
+                                        создания учетной записи
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form
+                                    onSubmit={handleCreatePassword}
+                                    className="space-y-4"
+                                >
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-userName">
+                                            Логин
+                                        </Label>
+                                        <Input
+                                            id="new-userName"
+                                            type="text"
+                                            placeholder="Введите логин"
+                                            value={newUsername}
+                                            onChange={(e) =>
+                                                setNewUsername(e.target.value)
+                                            }
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-password">
+                                            Пароль
+                                        </Label>
+                                        <Input
+                                            id="new-password"
+                                            type="password"
+                                            placeholder="Введите новый пароль"
+                                            value={newPassword}
+                                            onChange={(e) =>
+                                                setNewPassword(e.target.value)
+                                            }
+                                            required
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-sky-500 hover:bg-sky-600"
                                     >
                                         Создать пароль
-                                    </button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle className="flex items-center gap-2">
-                                            <UserPlus className="h-5 w-5 text-sky-600" />
-                                            Создание пароля
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            Введите логин и новый пароль для
-                                            создания учетной записи
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <form
-                                        onSubmit={handleCreatePassword}
-                                        className="space-y-4"
-                                    >
-                                        <div className="space-y-2">
-                                            <Label htmlFor="new-userName">
-                                                Логин
-                                            </Label>
-                                            <Input
-                                                id="new-userName"
-                                                type="text"
-                                                placeholder="Введите логин"
-                                                value={newUsername}
-                                                onChange={(e) =>
-                                                    setNewUsername(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="new-password">
-                                                Пароль
-                                            </Label>
-                                            <Input
-                                                id="new-password"
-                                                type="password"
-                                                placeholder="Введите новый пароль"
-                                                value={newPassword}
-                                                onChange={(e) =>
-                                                    setNewPassword(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                required
-                                            />
-                                        </div>
-                                        <Button
-                                            type="submit"
-                                            className="w-full bg-sky-500 hover:bg-sky-600"
-                                        >
-                                            Создать пароль
-                                        </Button>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
-                    </form>
+                                    </Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </CardContent>
             </Card>
         </div>

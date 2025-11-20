@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, GripVertical, Save, Calendar } from "lucide-react";
+import toast from "react-hot-toast";
 import { useSurveysService } from "../../hooks/useSurveysService";
 import {
     Card,
@@ -172,12 +173,17 @@ export function SurveyCreatePage() {
     };
 
     const handleSave = async () => {
-        if (selectedDiscipline?.id) {
+        try {
+            if (!selectedDiscipline?.id) {
+                toast.error("Дисциплина не выбрана", { duration: 3000 });
+                return;
+            }
+
             const newSurvey = {
                 surveyName: surveyTitle,
                 surveyEndDate: `${endDate} ${endTime}`,
                 surveyCreatedByTeacherID: teacherId,
-                disciplineId: selectedDiscipline?.id,
+                disciplineId: selectedDiscipline.id,
                 questions: questions.map((question) => ({
                     questionText: question.text,
                     questionPoints: question.points,
@@ -187,8 +193,8 @@ export function SurveyCreatePage() {
                     })),
                 })),
             };
+
             const res = await createSurvey(newSurvey);
-            console.log(res);
 
             if (res && res.status === "success") {
                 const updatedAvailableSurveys = [
@@ -203,8 +209,8 @@ export function SurveyCreatePage() {
                             teacherName,
                         },
                         surveyOnDiscipline: {
-                            disciplineId: selectedDiscipline?.id,
-                            disciplineName: selectedDiscipline?.name,
+                            disciplineId: selectedDiscipline.id,
+                            disciplineName: selectedDiscipline.name,
                         },
                     },
                 ];
@@ -216,7 +222,15 @@ export function SurveyCreatePage() {
                         availableSurveys: updatedAvailableSurveys,
                     })
                 );
+
+                toast.success("Опрос успешно создан", { duration: 3000 });
+
+                handleReturnToDashboard();
             }
+        } catch (error) {
+            toast.error("Не удалось создать опрос", {
+                duration: 3000,
+            });
         }
     };
 

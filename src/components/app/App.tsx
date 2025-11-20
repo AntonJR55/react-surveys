@@ -7,15 +7,17 @@ import {
     useNavigate,
     useLocation,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { Header } from "../header/Header";
 import { MainPage } from "../pages/MainPage";
 import { AuthPage } from "../pages/AuthPage";
 import { StudentPage } from "../pages/StudentPage";
 import { SurveyCompletionPage } from "../pages/SurveyCompletionPage";
 import { TeacherPage } from "../pages/TeacherPage";
-import { NotFoundPage } from "../pages/NotFoundPage";
 import { SurveyResultsPage } from "../pages/SurveyResultsPage";
 import { SurveyCreatePage } from "../pages/SurveyCreatePage";
+import { AdminPage } from "../pages/AdminPage";
+import { NotFoundPage } from "../pages/NotFoundPage";
 import { Footer } from "../footer/Footer";
 
 interface ITeacherSurveyResults {
@@ -137,11 +139,20 @@ function AppContent() {
                                 />
                             </ProtectedRoute>
                         }
-                    ></Route>
+                    />
+                    <Route
+                        path="/dashboard/admin"
+                        element={
+                            <ProtectedRoute requiredRole="admin">
+                                <AdminPage />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </main>
             <Footer isSimplified={isAuthPage} />
+            <Toaster position="bottom-center" />
         </div>
     );
 }
